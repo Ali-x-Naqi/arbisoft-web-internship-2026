@@ -28,6 +28,55 @@ Copy this template for every significant AI interaction. Fill it in and add it a
 
 ---
 
+## 2026-06-10
+
+**Task:** Set up Claude Code configuration (CLAUDE.md, skills, MCP servers, prompt logging template) as requested by mentor Huwaiza Tahir.
+
+**Prompt:**
+Set up Claude Code skills, plugins, and MCP properly for this internship project. Create CLAUDE.md with project overview, tech stack, folder structure, branch strategy, coding rules, and internship phases. Set up a /skills directory with skill files for React/Next.js component generation, API route creation, test writing, and Tailwind styling. Configure MCP servers (filesystem, GitHub, fetch). Set up Claude Code plugins via .claude/settings.json. Add a structured template section to prompts.md.
+
+**Tool:** Claude Code (Claude Sonnet 4.6)
+
+**Result:**
+- Created CLAUDE.md with full project context, tech stack table, folder structure, branch strategy, 10 coding rules, Tailwind v4 notes, testing conventions, internship phases, slash command reference
+- Created .claude/commands/component.md → /component slash command
+- Created .claude/commands/api-route.md → /api-route slash command
+- Created .claude/commands/test.md → /test slash command
+- Created .claude/commands/style.md → /style slash command
+- Created .claude/settings.json with pre-allowed npm and git commands
+- Created .mcp.json with filesystem, github, fetch, and playwright MCP servers
+- Created skills/ directory with 5 reference docs (component-generation, api-route-creation, test-writing, tailwind-styling, README)
+- Added structured prompt logging template to top of prompts.md
+
+**Notes / Changes Made After Review:**
+All output reviewed before commit. The .mcp.json uses ${ENV_VAR} syntax for credentials — no secrets hardcoded. Playwright MCP added later to support frontend verification.
+
+---
+
+## 2026-06-10 (session 2)
+
+**Task:** Complete remaining Week 1 task — connect the Notes frontend to a real HTTP API.
+
+**Prompt:**
+Connect the NoteForm frontend to an HTTP API. Create GET /api/notes and POST /api/notes routes in Next.js App Router. Add DELETE /api/notes/[id]. Update useNoteForm hook to POST to the API (async, with isSubmitting state). Create NotesClient component to fetch and display notes. Update the notes page to use NotesClient. Keep notes/page.tsx as a server component for metadata. Update tests to mock fetch instead of console.log.
+
+**Tool:** Claude Code (Claude Sonnet 4.6)
+
+**Result:**
+- Created src/app/api/notes/route.ts — GET (list, newest first) + POST (create with validation)
+- Created src/app/api/notes/[id]/route.ts — DELETE by id
+- In-memory store using globalThis for dev hot-reload persistence
+- Updated src/hooks/useNoteForm.ts — async handleSubmit, fetch POST, isSubmitting + apiError states
+- Updated src/components/NoteForm.tsx — onNoteCreated prop, "Saving…" loading state, disabled inputs during submit, API error display
+- Created src/components/NotesClient.tsx — client component with fetch, notes list, loading/error/empty states, delete button per note
+- Updated src/app/notes/page.tsx — server component delegates to NotesClient (metadata preserved)
+- Updated src/__tests__/NoteForm.test.tsx — test 3 now mocks fetch via vi.stubGlobal instead of console.log
+
+**Notes / Changes Made After Review:**
+Changed Note.createdAt from Date to string (ISO) since JSON serialization returns strings. Used globalThis.__notesStore pattern to survive Next.js hot-reloads in dev. Server/client component split keeps metadata working in the server component.
+
+---
+
 ## 2026-06-08
 
 **Prompt:**

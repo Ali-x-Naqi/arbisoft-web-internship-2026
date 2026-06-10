@@ -1,13 +1,25 @@
 'use client';
 
 import { useNoteForm } from '@/hooks';
+import type { Note } from '@/types';
 
-export default function NoteForm() {
-  const { formData, errors, updateField, handleSubmit } = useNoteForm();
+interface NoteFormProps {
+  onNoteCreated?: (note: Note) => void;
+}
 
-  const onSubmit = (e: React.FormEvent) => {
+export default function NoteForm({ onNoteCreated }: NoteFormProps) {
+  const {
+    formData,
+    errors,
+    apiError,
+    isSubmitting,
+    updateField,
+    handleSubmit,
+  } = useNoteForm(onNoteCreated);
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubmit();
+    await handleSubmit();
   };
 
   return (
@@ -33,7 +45,8 @@ export default function NoteForm() {
           value={formData.title}
           onChange={(e) => updateField('title', e.target.value)}
           placeholder="Give your note a title…"
-          className={`w-full rounded-lg border bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:ring-2 ${
+          disabled={isSubmitting}
+          className={`w-full rounded-lg border bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${
             errors.title
               ? 'border-red-500/60 focus:ring-red-500/40'
               : 'border-white/10 focus:border-indigo-500 focus:ring-indigo-500/40'
@@ -64,7 +77,8 @@ export default function NoteForm() {
           onChange={(e) => updateField('body', e.target.value)}
           placeholder="Write your note content here…"
           rows={5}
-          className={`w-full resize-none rounded-lg border bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:ring-2 ${
+          disabled={isSubmitting}
+          className={`w-full resize-none rounded-lg border bg-gray-800/60 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 ${
             errors.body
               ? 'border-red-500/60 focus:ring-red-500/40'
               : 'border-white/10 focus:border-indigo-500 focus:ring-indigo-500/40'
@@ -81,13 +95,21 @@ export default function NoteForm() {
         )}
       </div>
 
+      {/* API Error */}
+      {apiError && (
+        <p role="alert" className="text-xs font-medium text-red-400">
+          {apiError}
+        </p>
+      )}
+
       {/* Submit Button */}
       <button
         id="note-submit"
         type="submit"
-        className="w-full cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:bg-indigo-500 hover:shadow-indigo-500/40 active:scale-[0.98]"
+        disabled={isSubmitting}
+        className="w-full cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:bg-indigo-500 hover:shadow-indigo-500/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Save Note
+        {isSubmitting ? 'Saving…' : 'Save Note'}
       </button>
     </form>
   );

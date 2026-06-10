@@ -3,7 +3,7 @@ export interface Note {
   id: string;
   title: string;
   body: string;
-  createdAt: Date;
+  createdAt: string; // ISO 8601 string — serialized over HTTP
 }
 
 /** Shape of the NoteForm data before submission */

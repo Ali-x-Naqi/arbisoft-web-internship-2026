@@ -24,6 +24,24 @@
         "-y",
         "@modelcontextprotocol/server-fetch"
       ]
+    },
+    "trello": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-trello"
+      ],
+      "env": {
+        "TRELLO_API_KEY": "${TRELLO_API_KEY}",
+        "TRELLO_TOKEN": "${TRELLO_TOKEN}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ]
     }
   }
 }

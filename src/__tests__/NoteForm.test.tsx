@@ -1,13 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NoteForm from '@/components/NoteForm';
+import type { Note } from '@/types';
 
-// Mock next/navigation since NoteForm's parent may use usePathname
 vi.mock('next/navigation', () => ({
   usePathname: () => '/notes',
   useRouter: () => ({ push: vi.fn() }),
 }));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('NoteForm', () => {
   it('renders all form fields and the submit button', () => {
@@ -30,8 +34,22 @@ describe('NoteForm', () => {
     expect(screen.getByText(/body is required/i)).toBeInTheDocument();
   });
 
-  it('submits successfully with valid data and logs to console', async () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  it('submits successfully with valid data — calls POST /api/notes and clears form', async () => {
+    const mockNote: Note = {
+      id: '1',
+      title: 'My Test Note',
+      body: 'This is a valid note body with enough characters.',
+      createdAt: '2026-06-10T00:00:00.000Z',
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockNote }),
+      } as unknown as Response)
+    );
+
     const user = userEvent.setup();
     render(<NoteForm />);
 
@@ -42,19 +60,19 @@ describe('NoteForm', () => {
     );
     await user.click(screen.getByRole('button', { name: /save note/i }));
 
-    // No errors should be visible
-    expect(screen.queryByText(/is required/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(vi.mocked(fetch)).toHaveBeenCalledWith(
+        '/api/notes',
+        expect.objectContaining({
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+    });
 
-    // Console should have been called with the note data
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '✅ Note submitted:',
-      expect.objectContaining({
-        title: 'My Test Note',
-        body: 'This is a valid note body with enough characters.',
-      })
-    );
-
-    consoleSpy.mockRestore();
+    // Form fields cleared after successful submit
+    expect(screen.getByLabelText(/title/i)).toHaveValue('');
+    expect(screen.getByLabelText(/body/i)).toHaveValue('');
   });
 
   it('shows min-length error for title shorter than 3 characters', async () => {

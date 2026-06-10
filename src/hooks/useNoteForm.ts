@@ -1,25 +1,23 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { NoteFormData, NoteFormErrors } from '@/types';
+import type { Note, NoteFormData, NoteFormErrors } from '@/types';
 import { validateNoteForm, hasErrors } from '@/utils';
 
-/**
- * Custom hook that manages NoteForm state, validation, and submission.
- */
-export function useNoteForm(onSuccess?: (data: NoteFormData) => void) {
+export function useNoteForm(onSuccess?: (note: Note) => void) {
   const [formData, setFormData] = useState<NoteFormData>({
     title: '',
     body: '',
   });
   const [errors, setErrors] = useState<NoteFormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const updateField = useCallback(
     (field: keyof NoteFormData, value: string) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
-
-      // Clear field error on change if user has already attempted submit
+      setApiError(null);
       if (submitted) {
         setErrors((prev) => {
           const next = { ...prev };
@@ -31,7 +29,7 @@ export function useNoteForm(onSuccess?: (data: NoteFormData) => void) {
     [submitted]
   );
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     setSubmitted(true);
     const validationErrors = validateNoteForm(formData);
 
@@ -41,18 +39,40 @@ export function useNoteForm(onSuccess?: (data: NoteFormData) => void) {
     }
 
     setErrors({});
-    console.log('✅ Note submitted:', formData);
-    onSuccess?.(formData);
+    setIsSubmitting(true);
+    setApiError(null);
 
-    // Reset form after successful submission
-    setFormData({ title: '', body: '' });
-    setSubmitted(false);
-    return true;
+    try {
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const json = (await res.json()) as { data?: Note; error?: string };
+
+      if (!res.ok) {
+        setApiError(json.error ?? 'Failed to save note. Please try again.');
+        return false;
+      }
+
+      onSuccess?.(json.data!);
+      setFormData({ title: '', body: '' });
+      setSubmitted(false);
+      return true;
+    } catch {
+      setApiError('Network error. Please check your connection.');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [formData, onSuccess]);
 
   return {
     formData,
     errors,
+    apiError,
+    isSubmitting,
     updateField,
     handleSubmit,
   };
