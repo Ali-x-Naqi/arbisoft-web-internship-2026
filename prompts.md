@@ -77,6 +77,29 @@ Changed Note.createdAt from Date to string (ISO) since JSON serialization return
 
 ---
 
+## 2026-06-10 (session 3)
+
+**Task:** Verify Week 1 completion using Playwright browser automation across all 3 routes.
+
+**Prompt:**
+Check if week 1 of phase 1 is complete and run Playwright tests. Navigate to all three routes (/, /notes, /about), screenshot each page, test form validation by submitting empty, test successful note creation (fill title + body, submit, verify form clears and note appears), and confirm the shared Navbar/Footer and active-link highlighting work.
+
+**Tool:** Claude Code (Claude Sonnet 4.6) + Playwright MCP
+
+**Result:**
+- Confirmed all Week 1 checklist items complete (3 routes, shared layout, form validation, ESLint+Prettier, 4 Vitest tests, prompts.md)
+- Home page (`/`): hero, Navbar, Footer render correctly; active link highlighted on "Home"
+- Notes page (`/notes`): form renders with Title/Body fields and Save Note button
+- Validation test: empty submit shows "Title is required." and "Body is required." error alerts
+- Creation test: filled form submits successfully, form fields clear, "Playwright Test Note" appears at top of list
+- About page (`/about`): route loads, tech stack listed, active link on "About"
+- All 3 routes verified live via Playwright screenshots
+
+**Notes / Changes Made After Review:**
+Used element refs from `browser_snapshot` (e21, e24, e25) to interact with form fields after CSS selector failed due to Unicode ellipsis in placeholder text. No code changes needed — app worked correctly as-is.
+
+---
+
 ## 2026-06-08
 
 **Prompt:**
