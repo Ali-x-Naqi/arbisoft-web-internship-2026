@@ -42,3 +42,9 @@ next-env.d.ts
 
 # playwright mcp artifacts (auto-generated snapshots and console logs)
 .playwright-mcp/
+
+/src/generated/prisma
+
+# SQLite dev database
+dev.db
+dev.db-journal
