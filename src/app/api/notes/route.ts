@@ -19,20 +19,23 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as { title?: string; body?: string };
 
     if (!body.title?.trim()) {
-      return NextResponse.json({ error: 'title is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Title is required.' },
+        { status: 400 }
+      );
     }
     if (!body.body?.trim()) {
-      return NextResponse.json({ error: 'body is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Body is required.' }, { status: 400 });
     }
     if (body.title.trim().length < 3) {
       return NextResponse.json(
-        { error: 'title must be at least 3 characters' },
+        { error: 'Title must be at least 3 characters.' },
         { status: 400 }
       );
     }
     if (body.body.trim().length < 10) {
       return NextResponse.json(
-        { error: 'body must be at least 10 characters' },
+        { error: 'Body must be at least 10 characters.' },
         { status: 400 }
       );
     }

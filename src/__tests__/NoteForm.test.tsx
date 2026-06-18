@@ -66,6 +66,10 @@ describe('NoteForm', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'My Test Note',
+            body: 'This is a valid note body with enough characters.',
+          }),
         })
       );
     });

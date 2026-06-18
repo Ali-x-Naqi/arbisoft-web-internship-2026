@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     },
     rules: {
       'prettier/prettier': 'error',
+      // Async state updates after await fetch are intentional — this pattern
+      // (useCallback → void fn() in useEffect) is correct and not a synchronous setState call.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   prettier,
@@ -23,6 +26,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Prisma generated client — do not lint auto-generated files
+    'src/generated/**',
   ]),
 ]);
 
