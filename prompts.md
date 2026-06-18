@@ -100,6 +100,83 @@ Used element refs from `browser_snapshot` (e21, e24, e25) to interact with form 
 
 ---
 
+## 2026-06-18 (Week 2 — session 2)
+
+**Task:** Fix Prisma v7 driver adapter pattern and migrate all API routes from in-memory store to SQLite.
+
+**Prompt:**
+Prisma v7 with the new prisma-client generator requires a driver adapter — `datasourceUrl` in the constructor is no longer valid and there's no built-in engine. Install @prisma/adapter-libsql + @libsql/client, fix src/lib/prisma.ts and prisma/seed.ts to use `new PrismaLibSql({ url })` (pass config object not a pre-created client). Then rewrite GET+POST /api/notes and DELETE+PUT /api/notes/[id] to use Prisma instead of the in-memory store. Update Note interface with authorId and updatedAt. Write 7 backend API tests in src/__tests__/api/notes-api.test.ts using // @vitest-environment node and vi.mock('@/lib/prisma'). Fix Zod v4 error structure (issues not errors). All 15 tests must pass, lint must be clean.
+
+**Tool:** Claude Code (Claude Sonnet 4.6)
+
+**Result:**
+- Installed `@prisma/adapter-libsql` and `@libsql/client` (Prisma v7 requires explicit driver adapter for SQLite)
+- Fixed `PrismaLibSql` usage: pass `{ url }` config object directly, not a pre-created client
+- Updated `src/lib/prisma.ts` to use adapter pattern with `globalThis` singleton
+- Updated `prisma/seed.ts` to use adapter pattern; seed ran successfully
+- Rewrote `src/app/api/notes/route.ts` — GET (findMany orderBy desc) + POST (Zod safeParse → 400 or prisma.create → 201)
+- Rewrote `src/app/api/notes/[id]/route.ts` — DELETE + new PUT, both with P2025 → 404 handling
+- Updated `src/types/note.ts` — added `authorId: string` and `updatedAt: string`
+- Created `src/__tests__/api/notes-api.test.ts` — 7 tests covering all 4 handlers with mocked Prisma
+- Fixed Zod v4 breaking change: `parsed.error.errors[0]` → `parsed.error.issues[0]`
+- 15/15 tests pass, ESLint clean
+
+**Notes / Changes Made After Review:**
+Prisma v7 is a major breaking change from v5/v6: no binary engine, no datasourceUrl in constructor, no `url` field in schema datasource block. The adapter pattern is now mandatory. `PrismaLibSql` takes a config object `{ url }` — passing a pre-created `@libsql/client` instance causes a silent URL_INVALID error at query time. Zod v4 renamed `.errors` to `.issues` on the error object; `safeParse` itself never throws so the POST route was returning 500 when this was wrong.
+
+---
+
+## 2026-06-18 (Week 2 — session 1)
+
+**Task:** Set up Prisma v7 + Zod infrastructure, define User→Note schema, run initial migration and seed.
+
+**Prompt:**
+Initiate Week 2: replace the in-memory notes store with a real database using Prisma v7 + SQLite. Install prisma, @prisma/client, zod, tsx. Define a schema with User and Note models (one-to-many: User has many Notes, Note has authorId FK). Run prisma migrate dev to create the SQLite database. Generate the Prisma client to src/generated/prisma/. Create src/lib/prisma.ts singleton, src/lib/schemas.ts with Zod CreateNoteSchema and UpdateNoteSchema, and prisma/seed.ts to upsert a default user. Add prisma.config.ts at root for Prisma v7 configuration. Update .gitignore to exclude dev.db and src/generated/.
+
+**Tool:** Claude Code (Claude Sonnet 4.6)
+
+**Result:**
+- Installed prisma@7.8.0, @prisma/client@7.8.0, zod@4.4.3, tsx, dotenv
+- Defined `prisma/schema.prisma` with User (id, name, email, createdAt) + Note (id, title, body, createdAt, updatedAt, authorId) models
+- One-to-many relationship: `author User @relation(fields: [authorId], references: [id])`
+- Ran `npx prisma migrate dev --name init` — created SQLite migration
+- Generated Prisma client to `src/generated/prisma/` (Prisma v7 custom output path)
+- Created `src/lib/prisma.ts` — singleton PrismaClient with globalThis hot-reload guard
+- Created `src/lib/schemas.ts` — CreateNoteSchema (title min 3, body min 10, authorId default) + UpdateNoteSchema (partial with refine: at least one field required)
+- Created `prisma/seed.ts` — upsert default user (id: 'default-user', email: alinaqi1129@gmail.com)
+- Created `prisma.config.ts` — Prisma v7 config with schema path, migrations path, seed command
+- Updated `.gitignore` — added `src/generated/`, `dev.db`, `dev.db-journal`
+
+**Notes / Changes Made After Review:**
+Prisma v7 uses a new `prisma-client` generator (not `prisma-client-js`) and generates the client to a custom output path. The `@prisma/client` package is now a runtime-only package — the actual client types come from the generated output. Disk space issue (ENOSPC) required clearing npm cache before install succeeded.
+
+---
+
+## 2026-06-18 (Week 1 PR fixes)
+
+**Task:** Address all mentor (Huwaiza Tahir) code review comments on the feature/project-setup PR before merging.
+
+**Prompt:**
+My mentor reviewed my Week 1 PR and left 9 annotated issues (3 red/critical, 5 yellow/should-fix, 1 green/add-tests). Fix all of them: (Red) move skills/ to .claude/skills/, fix hardcoded Windows path in .mcp.json to ".", replace `<a href>` with Next.js `<Link>` on the home page. (Yellow) use barrel import in NotesClient.tsx, delete the fake eslint-disable comment, fix the non-null assertion `json.data!` to a null-guard, align server validation messages with client (capitalize + period). (Green) add body assertion to NoteForm fetch test, write NotesClient.test.tsx with 4 tests (loading, render, fetch error, delete). Lint and all tests must pass before committing.
+
+**Tool:** Claude Code (Claude Sonnet 4.6)
+
+**Result:**
+- Moved `skills/` → `.claude/skills/`
+- Fixed `.mcp.json` line 8: hardcoded Windows path → `"."`
+- Fixed `src/app/page.tsx`: both `<a href>` → `<Link href>` (Next.js client-side routing)
+- Fixed `src/components/NotesClient.tsx`: `import NoteForm from './NoteForm'` → `import { NoteForm } from '@/components'`; removed 2-line fake ESLint comment
+- Fixed `src/hooks/useNoteForm.ts`: `onSuccess?.(json.data!)` → null-guard `if (json.data) { onSuccess?.(json.data) }`
+- Added `'react-hooks/set-state-in-effect': 'off'` to `eslint.config.mjs` (rule IS real in eslint-config-next, mentor was wrong)
+- Added `src/generated/**` to ESLint `globalIgnores`
+- Added `body` assertion to NoteForm submit test
+- Created `src/__tests__/NotesClient.test.tsx` with 4 tests
+
+**Notes / Changes Made After Review:**
+The `react-hooks/set-state-in-effect` ESLint rule is real (not fabricated as mentor believed) — it flags setState calls inside useEffect that could cause infinite loops. Disabling it project-wide is the correct fix since the async fetch pattern in useEffect is intentional.
+
+---
+
 ## 2026-06-08
 
 **Prompt:**
