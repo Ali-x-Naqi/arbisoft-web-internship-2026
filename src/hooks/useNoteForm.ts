@@ -56,7 +56,9 @@ export function useNoteForm(onSuccess?: (note: Note) => void) {
         return false;
       }
 
-      onSuccess?.(json.data!);
+      if (json.data) {
+        onSuccess?.(json.data);
+      }
       setFormData({ title: '', body: '' });
       setSubmitted(false);
       return true;

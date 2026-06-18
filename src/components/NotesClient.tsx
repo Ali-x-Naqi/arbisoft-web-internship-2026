@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Note } from '@/types';
-import NoteForm from './NoteForm';
+import { NoteForm } from '@/components';
 
 export default function NotesClient() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -23,8 +23,6 @@ export default function NotesClient() {
   }, []);
 
   useEffect(() => {
-    // setState is called asynchronously after await fetch — not synchronous in the effect body
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchNotes();
   }, [fetchNotes]);
 
