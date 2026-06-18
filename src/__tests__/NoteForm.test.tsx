@@ -39,7 +39,9 @@ describe('NoteForm', () => {
       id: '1',
       title: 'My Test Note',
       body: 'This is a valid note body with enough characters.',
+      authorId: 'default-user',
       createdAt: '2026-06-10T00:00:00.000Z',
+      updatedAt: '2026-06-10T00:00:00.000Z',
     };
 
     vi.stubGlobal(

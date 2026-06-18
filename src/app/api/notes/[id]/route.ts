@@ -1,28 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Share the same store declared in the parent route module
-declare global {
-  var __notesStore: import('@/types').Note[] | undefined;
-}
+import { prisma } from '@/lib/prisma';
+import { UpdateNoteSchema } from '@/lib/schemas';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-// DELETE /api/notes/:id
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const notes = globalThis.__notesStore ?? [];
-    const index = notes.findIndex((n) => n.id === id);
-
-    if (index === -1) {
+    await prisma.note.delete({ where: { id } });
+    return NextResponse.json({ message: 'Note deleted' }, { status: 200 });
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === 'P2025') {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
     }
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
 
-    notes.splice(index, 1);
-    return NextResponse.json({ message: 'Note deleted' }, { status: 200 });
-  } catch {
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const body = await request.json();
+    const parsed = UpdateNoteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+    const note = await prisma.note.update({ where: { id }, data: parsed.data });
+    return NextResponse.json({ data: note }, { status: 200 });
+  } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === 'P2025') {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
