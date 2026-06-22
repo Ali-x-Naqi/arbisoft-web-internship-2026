@@ -6,6 +6,22 @@ interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
+export async function GET(_req: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const note = await prisma.note.findUnique({ where: { id } });
+    if (!note) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
+    return NextResponse.json({ data: note }, { status: 200 });
+  } catch {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(_req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
